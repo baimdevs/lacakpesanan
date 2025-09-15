@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lacak Pesanan - BaimStore</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .loading-spinner {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Logo Only Header -->
+    <header class="bg-white shadow-sm py-4 px-6">
+        <div class="max-w-7xl mx-auto flex justify-end">
+            <div class="text-right">
+                <h1 class="text-lg font-semibold text-blue-600">LACAK PESANAN</h1>
+                <p class="text-xs text-gray-600">BAIMSTORE</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Search Section -->
+        <section class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-6 text-center">Cek Status Pesanan Anda</h2>
+            
+            <form id="trackingForm" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="md:col-span-2">
+                        <label for="orderNumber" class="block text-sm font-medium text-gray-700 mb-2">Nomor Pesanan</label>
+                        <input 
+                            type="text" 
+                            id="orderNumber" 
+                            placeholder="Masukkan nomor pesanan Anda"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200"
+                            required
+                        >
+                    </div>
+                    <div class="flex items-end">
+                        <button 
+                            type="submit" 
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center"
+                        >
+                            <span class="mr-2">Cari</span>
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-center mt-4">
+                    <span class="text-sm text-gray-500">Contoh format: AZUA1111 atau ORD12345</span>
+                </div>
+            </form>
+        </section>
+
+        <!-- Results Section -->
+        <section id="resultsSection" class="hidden">
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <!-- Order Summary -->
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800">Detail Pesanan</h3>
+                            <p class="text-gray-600 mt-1">ID LACAK: <span id="displayOrderNumber" class="font-medium"></span></p>
+                            <p class="text-gray-600">Tanggal Pesan: <span id="orderDate" class="font-medium"></span></p>
+                        </div>
+                        <div class="mt-4 md:mt-0 flex items-center">
+                            <span id="statusBadge" class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tracking Timeline -->
+                <div class="p-6">
+                    <h4 class="text-lg font-semibold text-gray-800 mb-4">Riwayat Pengiriman</h4>
+                    
+                    <div class="relative">
+                        <!-- Timeline Line -->
+                        <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+                        
+                        <!-- Timeline Items -->
+                        <div id="timelineItems" class="space-y-8 relative z-10">
+                            <!-- Timeline items will be populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- No Results Section -->
+        <section id="noResultsSection" class="hidden">
+            <div class="bg-white rounded-lg shadow-md p-8 text-center">
+                <div class="mb-4">
+                    <i class="fas fa-search text-gray-400 text-5xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">Pesanan Tidak Ditemukan</h3>
+                <p class="text-gray-600 mb-6">Maaf, tidak ada data pesanan dengan nomor tersebut.</p>
+                <p class="text-sm text-gray-500">Pastikan nomor pesanan yang dimasukkan benar atau hubungi layanan pelanggan jika masalah berlanjut.</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center">
+            <p class="text-gray-600 text-sm">&copy; 2024 BaimStore. Hak cipta dilindungi.</p>
+        </div>
+    </footer>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 flex items-center">
+            <div class="loading-spinner mr-3 text-blue-600">
+                <i class="fas fa-spinner fa-spin fa-lg"></i>
+            </div>
+            <span class="text-gray-700">Memproses...</span>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const trackingForm = document.getElementById('trackingForm');
+            const resultsSection = document.getElementById('resultsSection');
+            const noResultsSection = document.getElementById('noResultsSection');
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const orderNumberInput = document.getElementById('orderNumber');
+            
+            // Sample order data structure (would normally come from order.js)
+            const sampleOrders = {
+                'AZUA1111': {
+                    id: 'AZUA1111',
+                    date: '19 Mei 2024',
+                    status: 'SUCCESS',
+                    history: [
+                        { event: 'Pesanan Dibuat', time: '19 Mei 2024, 10:30 WIB' },
+                        { event: 'Diproses', time: '19 Mei 2024, 11:45 WIB' },
+                        { event: 'Siap Kirim', time: '20 Mei 2024, 08:15 WIB' },
+                        { event: 'Dalam Perjalanan', time: '21 Mei 2024, 07:30 WIB' },
+                        { event: 'Terkirim', time: '22 Mei 2024, 14:20 WIB' }
+                    ]
+                },
+                'ORD12345': {
+                    id: 'ORD12345',
+                    date: '18 Mei 2024',
+                    status: 'PENDING',
+                    history: [
+                        { event: 'Pesanan Dibuat', time: '18 Mei 2024, 09:15 WIB' },
+                        { event: 'Diproses', time: '18 Mei 2024, 10:30 WIB' },
+                        { event: 'Menunggu Pembayaran', time: '18 Mei 2024, 11:45 WIB' }
+                    ]
+                },
+              'AZUA1111': {
+                    id: 'AZUA1111',
+                    date: '14 September 2025',
+                    status: 'SUCCESS YouTube premium 3b',
+                    history: [
+                        { event: 'Pesanan Dibuat', time: '14 September 2025, 10:00 WIB' },
+                        { event: 'Diproses', time: '14 September 2025, 11:45 WIB' }
+                        { event: 'Terkirim', time: '14 September 2025, 14:20 WIB' }
+                    ]
+                },
+                'INV98765': {
+                    id: 'INV98765',
+                    date: '17 Mei 2024',
+                    status: 'INVALID',
+                    history: [
+                        { event: 'Pesanan Dibuat', time: '17 Mei 2024, 14:20 WIB' },
+                        { event: 'Gagal Diproses', time: '17 Mei 2024, 15:45 WIB' },
+                        { event: 'Pesanan Dibatalkan', time: '17 Mei 2024, 16:30 WIB' }
+                    ]
+                }
+            };
+            
+            trackingForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const orderNumber = orderNumberInput.value.trim().toUpperCase();
+                
+                if (!orderNumber) return;
+                
+                // Show loading overlay
+                loadingOverlay.classList.remove('hidden');
+                
+                // Simulate API call delay
+                setTimeout(() => {
+                    loadingOverlay.classList.add('hidden');
+                    
+                    if (sampleOrders[orderNumber]) {
+                        // Show results
+                        displayResults(sampleOrders[orderNumber]);
+                        resultsSection.classList.remove('hidden');
+                        noResultsSection.classList.add('hidden');
+                    } else {
+                        // Show no results
+                        resultsSection.classList.add('hidden');
+                        noResultsSection.classList.remove('hidden');
+                    }
+                }, 1500);
+            });
+            
+            function displayResults(orderData) {
+                document.getElementById('displayOrderNumber').textContent = orderData.id;
+                document.getElementById('orderDate').textContent = orderData.date;
+                
+                // Set status badge
+                const statusBadge = document.getElementById('statusBadge');
+                switch(orderData.status) {
+                    case 'SUCCESS':
+                        statusBadge.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800';
+                        statusBadge.innerHTML = '<i class="fas fa-check-circle mr-1"></i> PESANAN BERHASIL';
+                        break;
+                    case 'PENDING':
+                        statusBadge.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800';
+                        statusBadge.innerHTML = '<i class="fas fa-clock mr-1"></i> PENDING';
+                        break;
+                    case 'INVALID':
+                        statusBadge.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800';
+                        statusBadge.innerHTML = '<i class="fas fa-times-circle mr-1"></i> INVALID/GAGAL';
+                        break;
+                }
+                
+                // Populate timeline
+                const timelineContainer = document.getElementById('timelineItems');
+                timelineContainer.innerHTML = '';
+                
+                orderData.history.forEach((item, index) => {
+                    const timelineItem = document.createElement('div');
+                    timelineItem.className = 'flex items-start';
+                    
+                    const iconClass = getIconForEvent(item.event);
+                    
+                    timelineItem.innerHTML = `
+                        <div class="flex-shrink-0 w-8 h-8 ${getStatusColor(orderData.status)} rounded-full flex items-center justify-center -ml-4 z-10">
+                            <i class="${iconClass} text-white text-xs"></i>
+                        </div>
+                        <div class="ml-4 pb-8">
+                            <div class="flex items-center">
+                                <h5 class="font-medium text-gray-800">${item.event}</h5>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-1">${item.time}</p>
+                        </div>
+                    `;
+                    
+                    timelineContainer.appendChild(timelineItem);
+                });
+            }
+            
+            function getIconForEvent(event) {
+                if (event.includes('Dibuat')) return 'fas fa-shopping-cart';
+                if (event.includes('Diproses')) return 'fas fa-cog';
+                if (event.includes('Kir')) return 'fas fa-truck';
+                if (event.includes('Perjalanan')) return 'fas fa-route';
+                if (event.includes('Terkirim')) return 'fas fa-check';
+                if (event.includes('Menunggu')) return 'fas fa-hourglass-half';
+                if (event.includes('Gagal') || event.includes('Dibatalkan')) return 'fas fa-times';
+                return 'fas fa-info-circle';
+            }
+            
+            function getStatusColor(status) {
+                switch(status) {
+                    case 'SUCCESS': return 'bg-green-500';
+                    case 'PENDING': return 'bg-yellow-500';
+                    case 'INVALID': return 'bg-red-500';
+                    default: return 'bg-gray-500';
+                }
+            }
+            
+            // Add some visual feedback on input focus
+            orderNumberInput.addEventListener('focus', function() {
+                this.parentElement.classList.add('border-blue-500');
+            });
+            
+            orderNumberInput.addEventListener('blur', function() {
+                this.parentElement.classList.remove('border-blue-500');
+            });
+        });
+    </script>
+</body>
+</html>
